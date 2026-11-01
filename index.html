@@ -1,0 +1,314 @@
+<!doctype html>
+<html lang="de">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ishtmi – Cozy Planet Zoo Streams auf Twitch</title>
+  <meta name="description" content="Ishtmi streamt Planet Zoo 2, Planet Zoo und Graveyard Keeper II auf Twitch – gemütlich, auf Deutsch, in FHD60. Streamplan, News, Games, Workshop und Setup.">
+  <meta name="theme-color" content="#0b1410">
+  <meta property="og:title" content="Ishtmi – Cozy Planet Zoo Streams">
+  <meta property="og:description" content="Streamplan, News und alle Games von Ishtmi. Dienstag bis Sonntag live auf Twitch.">
+  <meta property="og:type" content="website">
+  <meta property="og:image" content="https://static-cdn.jtvnw.net/jtv_user_pictures/da2e2ef8-3df0-4442-a39f-84fad3b5e6af-profile_image-300x300.png">
+  <link rel="icon" href="https://static-cdn.jtvnw.net/jtv_user_pictures/da2e2ef8-3df0-4442-a39f-84fad3b5e6af-profile_image-70x70.png">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="preconnect" href="https://shared.akamai.steamstatic.com">
+  <link rel="preconnect" href="https://video.akamai.steamstatic.com">
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+
+<!-- Intro-Vorhang (wird per JS gesteuert, nur beim ersten Besuch der Sitzung) -->
+<div class="intro" id="intro" aria-hidden="true">
+  <div class="intro-panel top"></div>
+  <div class="intro-panel bottom"></div>
+  <div class="intro-center">
+    <div class="intro-word" id="intro-word">Ishtmi</div>
+    <div class="intro-line"><i></i></div>
+    <div class="intro-sub">Willkommen im Zoo</div>
+  </div>
+</div>
+
+<div class="world" id="world" aria-hidden="true"></div>
+<div class="grain" aria-hidden="true"></div>
+<div class="scrollbar" aria-hidden="true"><i id="scrollbar-fill"></i></div>
+<div class="cursor" id="cursor" aria-hidden="true">
+  <div class="cursor-dot"></div>
+  <div class="cursor-ring"><span class="cursor-label" id="cursor-label"></span></div>
+</div>
+<nav class="paws" id="paws" aria-label="Schnellnavigation"></nav>
+
+<a class="skip" href="#stream">Zum Inhalt springen</a>
+
+<!-- ===================== NAV ===================== -->
+<nav class="nav" id="nav">
+  <a class="nav-brand" href="#top" aria-label="Zur Startseite">
+    <img src="https://static-cdn.jtvnw.net/jtv_user_pictures/da2e2ef8-3df0-4442-a39f-84fad3b5e6af-profile_image-70x70.png" alt="" width="36" height="36">
+    <span>Ishtmi</span>
+    <i class="nav-live-dot" id="nav-live-dot" title="Live-Status"></i>
+  </a>
+  <button class="nav-burger" id="nav-burger" aria-label="Menü öffnen" aria-expanded="false" aria-controls="nav-links">
+    <span></span><span></span><span></span>
+  </button>
+  <ul class="nav-links" id="nav-links">
+    <li><a href="#stream" data-section="stream">Stream</a></li>
+    <li><a href="#info" data-section="info">Info</a></li>
+    <li><a href="#plan" data-section="plan">Streamplan</a></li>
+    <li><a href="#news" data-section="news">News</a></li>
+    <li><a href="#workshop" data-section="workshop">Workshop</a></li>
+    <li><a href="#games" data-section="games">Games</a></li>
+    <li><a href="#setup" data-section="setup">Setup</a></li>
+    <li><a class="btn btn-twitch btn-sm magnetic" href="https://www.twitch.tv/ishtmi" target="_blank" rel="noopener">
+      <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true"><path fill="currentColor" d="M4.3 2 2 7.6v16.1h5.5V26h3.1l2.3-2.3h3.6L22 18.2V2H4.3Zm15.4 15.1-2.7 2.7h-4.3l-2.3 2.3v-2.3H6.8V4.3h12.9v12.8ZM16.4 8.3h-2.2v6h2.2v-6Zm-5.9 0H8.3v6h2.2v-6Z"/></svg>
+      Twitch
+    </a></li>
+  </ul>
+</nav>
+
+<!-- ===================== HERO ===================== -->
+<header class="hero" id="top">
+  <div class="hero-frame" id="hero-frame">
+    <div class="hero-media" id="hero-media" aria-hidden="true">
+      <div class="hero-slides" id="hero-slides"></div>
+      <video class="hero-video" id="hero-video" muted playsinline loop preload="none" disablepictureinpicture></video>
+    </div>
+    <div class="hero-shade" aria-hidden="true"></div>
+    <canvas class="fireflies" id="fireflies" aria-hidden="true"></canvas>
+  </div>
+
+  <div class="hero-content">
+    <a class="status-pill" id="hero-status" href="https://www.twitch.tv/ishtmi" target="_blank" rel="noopener">
+      <span class="dot"></span><span class="txt">Status wird geladen …</span>
+    </a>
+    <h1 class="hero-title" id="hero-title" aria-label="Ishtmi">Ishtmi</h1>
+    <p class="hero-sub">
+      <span class="w" style="--i:0">Cozy</span>
+      <span class="w" style="--i:1">Planet-Zoo-Streams</span>
+      <span class="w" style="--i:2">auf</span>
+      <span class="w" style="--i:3">Deutsch.</span>
+    </p>
+    <p class="hero-lead">Gehege bauen, Tiere pflegen, Franchise managen – entspannt, in FHD60 und mit nem Kaffee in der Hand. Dienstag bis Sonntag live.</p>
+    <div class="hero-cta">
+      <a class="btn btn-twitch btn-lg magnetic" href="https://www.twitch.tv/ishtmi" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M4.3 2 2 7.6v16.1h5.5V26h3.1l2.3-2.3h3.6L22 18.2V2H4.3Zm15.4 15.1-2.7 2.7h-4.3l-2.3 2.3v-2.3H6.8V4.3h12.9v12.8ZM16.4 8.3h-2.2v6h2.2v-6Zm-5.9 0H8.3v6h2.2v-6Z"/></svg>
+        Auf Twitch ansehen
+      </a>
+      <a class="btn btn-ghost btn-lg magnetic" href="https://discord.gg/UdP7qkwPY7" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="currentColor" d="M19.5 5.3A17 17 0 0 0 15.4 4l-.2.4a15 15 0 0 1 3.7 1.9 13.7 13.7 0 0 0-13.8 0 15 15 0 0 1 3.7-1.9L8.6 4a17 17 0 0 0-4.1 1.3C1.9 9.2 1.2 13 1.5 16.7a17 17 0 0 0 5 2.6l1.1-1.8a11 11 0 0 1-1.7-.8l.4-.3a12.2 12.2 0 0 0 11.4 0l.4.3-1.7.8 1.1 1.8a17 17 0 0 0 5-2.6c.4-4.3-.7-8-2.9-11.4ZM8.7 14.4c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Zm6.6 0c-1 0-1.8-.9-1.8-2s.8-2 1.8-2 1.8.9 1.8 2-.8 2-1.8 2Z"/></svg>
+        Discord beitreten
+      </a>
+    </div>
+    <div class="hero-next" id="hero-next"></div>
+  </div>
+
+  <div class="hero-tags" aria-hidden="true">
+    <div class="marquee">
+      <span>Planet Zoo 2</span><span>·</span><span>Cozy</span><span>·</span><span>Deutsch</span><span>·</span><span>FHD60</span><span>·</span><span>Drops aktiviert</span><span>·</span><span>Graveyard Keeper II</span><span>·</span><span>Bastelei am Samstag</span><span>·</span><span>SammlerSonntach</span><span>·</span><span>Steam Workshop</span><span>·</span>
+      <span>Planet Zoo 2</span><span>·</span><span>Cozy</span><span>·</span><span>Deutsch</span><span>·</span><span>FHD60</span><span>·</span><span>Drops aktiviert</span><span>·</span><span>Graveyard Keeper II</span><span>·</span><span>Bastelei am Samstag</span><span>·</span><span>SammlerSonntach</span><span>·</span><span>Steam Workshop</span><span>·</span>
+    </div>
+  </div>
+
+  <a class="scroll-hint" href="#stream" aria-label="Nach unten scrollen"><span></span></a>
+  <button class="hero-mute magnetic" id="hero-mute" type="button" hidden aria-pressed="false" aria-label="Ton einschalten" title="Ton des Trailers" data-cursor="Ton">
+    <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M3 9v6h4l5 5V4L7 9H3Zm13.5 3A4.5 4.5 0 0 0 14 8v8a4.5 4.5 0 0 0 2.5-4Z"/></svg>
+  </button>
+</header>
+
+<main>
+
+<!-- ===================== STREAM ===================== -->
+<section class="section" id="stream" data-biome="stream">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Jetzt im Stream</p>
+      <h2 class="split">Live aus dem Zoo</h2>
+      <p class="sub">Wenn Ishtmi live ist, läuft der Stream direkt hier. Ansonsten zeigt dir die Karte, wann es weitergeht.</p>
+    </div>
+    <div class="stream-grid">
+      <div class="player reveal" id="player-wrap">
+        <iframe id="twitch-player" title="Twitch Stream von Ishtmi" allowfullscreen allow="autoplay; fullscreen" loading="lazy"></iframe>
+      </div>
+      <aside class="stream-card reveal" id="stream-card">
+        <div class="stream-card-top">
+          <img src="https://static-cdn.jtvnw.net/jtv_user_pictures/da2e2ef8-3df0-4442-a39f-84fad3b5e6af-profile_image-300x300.png" alt="Profilbild von Ishtmi" width="64" height="64">
+          <div>
+            <strong>Ishtmi</strong>
+            <span class="muted" id="follow-count">twitch.tv/ishtmi</span>
+          </div>
+          <span class="live-badge" id="live-badge">…</span>
+        </div>
+        <h3 class="stream-title" id="stream-title">Lade Stream-Infos …</h3>
+        <dl class="stream-meta">
+          <div><dt>Spiel</dt><dd id="stream-game">–</dd></div>
+          <div><dt>Status</dt><dd id="stream-uptime">–</dd></div>
+          <div><dt>Zuschauer</dt><dd id="stream-viewers">–</dd></div>
+          <div><dt>Nächster Stream</dt><dd id="stream-next">–</dd></div>
+        </dl>
+        <div class="countdown" id="countdown" hidden>
+          <span class="cd-label" id="cd-label">Nächster Stream in</span>
+          <div class="cd-digits">
+            <div><b id="cd-d">0</b><small>Tage</small></div>
+            <div><b id="cd-h">00</b><small>Std</small></div>
+            <div><b id="cd-m">00</b><small>Min</small></div>
+            <div><b id="cd-s">00</b><small>Sek</small></div>
+          </div>
+        </div>
+        <div class="stream-actions">
+          <a class="btn btn-twitch magnetic" href="https://www.twitch.tv/ishtmi" target="_blank" rel="noopener">Folgen auf Twitch</a>
+          <a class="btn btn-ghost magnetic" href="https://www.twitch.tv/ishtmi/videos" target="_blank" rel="noopener">Letzte Videos</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ===================== STATS ===================== -->
+<section class="stats" id="stats" aria-label="Zahlen">
+  <div class="wrap stats-grid">
+    <div class="stat reveal"><strong id="stat-follow" data-count="215">0</strong><span>Follower auf Twitch</span></div>
+    <div class="stat reveal" style="transition-delay:80ms"><strong id="stat-subs" data-count="0" data-suffix="+">0</strong><span>Abos im Steam Workshop</span></div>
+    <div class="stat reveal" style="transition-delay:160ms"><strong id="stat-items" data-count="0">0</strong><span>Blueprints &amp; Zoos geteilt</span></div>
+    <div class="stat reveal" style="transition-delay:240ms"><strong data-count="5">0</strong><span>Streamtage pro Woche</span></div>
+  </div>
+</section>
+
+<!-- Bildband aus dem Workshop -->
+<section class="strip" aria-hidden="true">
+  <div class="strip-row" id="strip-a"></div>
+  <div class="strip-row rev" id="strip-b"></div>
+</section>
+
+<div class="scene-slot" data-scene="savanne"></div>
+
+<!-- ===================== INFO ===================== -->
+<section class="section section-alt" id="info" data-biome="info">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Über den Stream</p>
+      <h2 class="split">Was dich erwartet</h2>
+      <p class="sub">Ishtmi streamt Planet Zoo 2, Planet Zoo und Graveyard Keeper II – gemütlich, ohne Hektik und mit Liebe zum Detail. Durch Schichtarbeit läuft der Stream mal vormittags, mal abends.</p>
+    </div>
+    <div class="feature-grid" id="feature-grid"></div>
+  </div>
+</section>
+
+<!-- ===================== STREAMPLAN ===================== -->
+<section class="section" id="plan" data-biome="plan">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Streamplan</p>
+      <h2 class="split">Wann geht's los?</h2>
+      <p class="sub">Montag und Freitag bleibt der Stream offline. Je nach Schicht geht's entweder vormittags oder abends los – der Plan ist eine grobe Orientierung, die Zeiten können variieren.</p>
+    </div>
+    <div class="week" id="week"></div>
+    <p class="plan-note reveal">Alle Zeiten in deutscher Zeit (Europe/Berlin). Kurzfristige Änderungen gibt's im <a href="https://discord.gg/UdP7qkwPY7" target="_blank" rel="noopener">Discord</a> und auf <a href="https://www.twitch.tv/ishtmi/schedule" target="_blank" rel="noopener">Twitch</a>.</p>
+  </div>
+</section>
+
+<div class="scene-slot" data-scene="tiefsee"></div>
+
+<!-- ===================== NEWS ===================== -->
+<section class="section section-alt" id="news" data-biome="news">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">News</p>
+      <h2 class="split">Neues aus dem Gehege</h2>
+      <p class="sub">Was gerade im Stream passiert, was geplant ist und was es Neues gibt.</p>
+    </div>
+    <div class="news-grid" id="news-grid"></div>
+  </div>
+</section>
+
+<div class="scene-slot" data-scene="workshop"></div>
+
+<!-- ===================== WORKSHOP ===================== -->
+<section class="section section-workshop" id="workshop" data-biome="workshop">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Steam Workshop</p>
+      <h2 class="split">Gebaut im Stream, geteilt mit euch</h2>
+      <p class="sub">Blueprints und Gehege aus Ishtmis Streams – kostenlos im Steam Workshop. Die Highlights zuerst, der Rest darunter.</p>
+    </div>
+    <div class="ws-featured" id="ws-featured"></div>
+    <div class="ws-grid" id="ws-grid"></div>
+    <div class="ws-more reveal">
+      <a class="btn btn-ghost magnetic" id="ws-link" href="https://steamcommunity.com/profiles/76561198109894819/myworkshopfiles/" target="_blank" rel="noopener">
+        <svg viewBox="0 0 24 24" width="18" height="18" aria-hidden="true"><path fill="currentColor" d="M12 2a10 10 0 0 0-9.96 9.1l5.35 2.21a2.83 2.83 0 0 1 1.6-.5h.16l2.38-3.45v-.05a3.77 3.77 0 1 1 3.77 3.77h-.09l-3.4 2.43v.13a2.83 2.83 0 0 1-5.62.5L2.4 14.56A10 10 0 1 0 12 2Zm-5.7 15.2.62.26a2.1 2.1 0 1 0 2.62-2.6l.5.2a1.95 1.95 0 1 1-1.5 3.6l-2.24-.93Zm9-9.9a2.5 2.5 0 1 1 0 5 2.5 2.5 0 0 1 0-5Zm0 .63a1.88 1.88 0 1 0 0 3.75 1.88 1.88 0 0 0 0-3.75Z"/></svg>
+        Alle Workshop-Items ansehen
+      </a>
+    </div>
+  </div>
+</section>
+
+<div class="scene-slot" data-scene="nacht"></div>
+
+<!-- Große Outline-Laufschrift -->
+<div class="outline-marquee" aria-hidden="true">
+  <div class="outline-track" id="outline-track">
+    <span class="fill">Planet Zoo 2</span><span>✦</span><span>Graveyard Keeper II</span><span>✦</span><span>Planet Zoo</span><span>✦</span><span>Satisfactory</span><span>✦</span><span>Anno 2205</span><span>✦</span><span>Kena</span><span>✦</span>
+    <span class="fill">Planet Zoo 2</span><span>✦</span><span>Graveyard Keeper II</span><span>✦</span><span>Planet Zoo</span><span>✦</span><span>Satisfactory</span><span>✦</span><span>Anno 2205</span><span>✦</span><span>Kena</span><span>✦</span>
+  </div>
+</div>
+
+<!-- ===================== GAMES ===================== -->
+<section class="section section-alt" id="games" data-biome="games">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Games</p>
+      <h2 class="split">Was sonst noch läuft</h2>
+      <p class="sub">Planet Zoo ist das Herzstück – aber zwischendurch gibt's auch Aufbau, Survival und Abenteuer.</p>
+    </div>
+    <div class="filters reveal" id="game-filters" role="tablist" aria-label="Spiele filtern"></div>
+    <div class="game-grid" id="game-grid"></div>
+  </div>
+</section>
+
+<div class="scene-slot" data-scene="zoo"></div>
+
+<!-- ===================== SETUP ===================== -->
+<section class="section" id="setup" data-biome="setup">
+  <div class="wrap">
+    <div class="section-head reveal">
+      <p class="eyebrow">Setup</p>
+      <h2 class="split">Womit gestreamt wird</h2>
+      <p class="sub">Rechner, Zubehör und Software hinter dem FHD60-Stream.</p>
+    </div>
+    <div class="setup-grid" id="setup-grid"></div>
+  </div>
+</section>
+
+</main>
+
+<!-- ===================== FOOTER ===================== -->
+<footer class="footer">
+  <div class="wordmark" id="wordmark" aria-hidden="true">Ishtmi</div>
+  <div class="wrap footer-inner">
+    <div class="footer-brand">
+      <img src="https://static-cdn.jtvnw.net/jtv_user_pictures/da2e2ef8-3df0-4442-a39f-84fad3b5e6af-profile_image-70x70.png" alt="" width="44" height="44">
+      <div>
+        <strong>Ishtmi</strong>
+        <span class="muted">Cozy Planet-Zoo-Streams auf Deutsch</span>
+      </div>
+    </div>
+    <ul class="footer-links">
+      <li><a href="https://www.twitch.tv/ishtmi" target="_blank" rel="noopener">Twitch</a></li>
+      <li><a href="https://discord.gg/UdP7qkwPY7" target="_blank" rel="noopener">Discord</a></li>
+      <li><a href="https://steamcommunity.com/profiles/76561198109894819/myworkshopfiles/" target="_blank" rel="noopener">Steam Workshop</a></li>
+      <li><a href="https://www.twitch.tv/ishtmi/clips" target="_blank" rel="noopener">Clips</a></li>
+      <li><a href="https://www.twitch.tv/ishtmi/videos" target="_blank" rel="noopener">Videos</a></li>
+      <li><a href="#top" class="to-top">Nach oben ↑</a></li>
+    </ul>
+    <p class="footer-legal muted">© <span id="year"></span> Ishtmi. Fan- und Community-Seite. Nicht mit Twitch, Valve oder Frontier Developments verbunden. Planet Zoo 2 Screenshots und Trailer © Frontier Developments plc, Spiele-Cover und Workshop-Bilder © der jeweiligen Rechteinhaber.</p>
+  </div>
+</footer>
+
+<script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.6.7/hls.min.js" defer></script>
+<script src="js/data.js"></script>
+<script src="js/workshop.js"></script>
+<script src="js/main.js" defer></script>
+<script src="js/fx.js" defer></script>
+</body>
+</html>
