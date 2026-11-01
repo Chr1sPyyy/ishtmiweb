@@ -17,6 +17,20 @@
   <link rel="preconnect" href="https://video.akamai.steamstatic.com">
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@500;700;800&family=Manrope:wght@400;500;600;700&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="css/style.css">
+  <script>
+    /* Effektmodus vor dem ersten Rendern festlegen:
+       gespeicherte Wahl > ?fx=lite|full > schwaches Gerät → "lite" (sparsam). */
+    (function () {
+      var d = document.documentElement, m = "auto";
+      try { m = localStorage.getItem("ishtmi-fx") || "auto"; } catch (e) {}
+      var q = location.search.match(/[?&]fx=(lite|full)/); if (q) m = q[1];
+      var n = navigator;
+      var weak = (n.hardwareConcurrency && n.hardwareConcurrency <= 4) || (n.deviceMemory && n.deviceMemory <= 4) ||
+                 (n.connection && n.connection.saveData) || matchMedia("(pointer:coarse)").matches;
+      if (m === "lite" || (m === "auto" && weak)) d.classList.add("lite");
+      d.dataset.fx = m;
+    })();
+  </script>
 </head>
 <body>
 
@@ -32,7 +46,6 @@
 </div>
 
 <div class="world" id="world" aria-hidden="true"></div>
-<div class="grain" aria-hidden="true"></div>
 <div class="scrollbar" aria-hidden="true"><i id="scrollbar-fill"></i></div>
 <div class="cursor" id="cursor" aria-hidden="true">
   <div class="cursor-dot"></div>
@@ -300,9 +313,17 @@
       <li><a href="https://www.twitch.tv/ishtmi/videos" target="_blank" rel="noopener">Videos</a></li>
       <li><a href="#top" class="to-top">Nach oben ↑</a></li>
     </ul>
+    <div class="footer-fx">
+      <button class="fx-toggle" id="fx-toggle" type="button" title="Effekte umschalten, falls die Seite ruckelt">✨ Effekte: <b>Voll</b></button>
+    </div>
     <p class="footer-legal muted">© <span id="year"></span> Ishtmi. Fan- und Community-Seite. Nicht mit Twitch, Valve oder Frontier Developments verbunden. Planet Zoo 2 Screenshots und Trailer © Frontier Developments plc, Spiele-Cover und Workshop-Bilder © der jeweiligen Rechteinhaber.</p>
   </div>
 </footer>
+
+<div class="fx-toast" id="fx-toast" role="status" aria-live="polite">
+  <span id="fx-toast-text"></span>
+  <button type="button" id="fx-toast-btn"></button>
+</div>
 
 <script src="https://cdn.jsdelivr.net/npm/lenis@1.1.18/dist/lenis.min.js" defer></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/hls.js/1.6.7/hls.min.js" defer></script>

@@ -13,7 +13,7 @@ Kein Build, kein Framework: einfach `index.html` öffnen oder den Ordner auf ein
 | `js/data.js` → `HERO`, `SCENES` | Hero-Video/Diashow und die fünf Scroll-Szenen (Bild, Effekt, Texte) |
 | `js/workshop.js` | Steam-Workshop-Items (Titel, Bild, Abos, Favoriten, Aufrufe, Kurztext) und die Highlight-Auswahl |
 | `js/main.js` | Logik: Hero-Video, Szenen, Rendern der Daten, Live-Status, Countdown, Twitch-Player |
-| `js/fx.js` | Erlebnis-Schicht: Intro-Vorhang, Smooth Scroll (Lenis), eigener Cursor, Magnet-Buttons, Split-Text, Zähler, Spotlight, Pfoten-Navigation |
+| `js/fx.js` | Erlebnis-Schicht: Intro-Vorhang, Smooth Scroll (Lenis), eigener Cursor, Magnet-Buttons, Split-Text, Zähler, Spotlight, Pfoten-Navigation, Welt-Ebene, Leistungsmodus |
 
 ## Inhalte pflegen
 
@@ -66,6 +66,19 @@ Alles Inhaltliche steht in `js/data.js`:
   Blätter, Giraffe, Blasen, Fische, Schmetterlinge, Luftballons, laufender Elefant, Sterne, Glühwürmchen, Seilbahn.
 - Biom tauschen = Bild-URL ändern; Entdeckungen anpassen = Liste in `critters` ändern.
 - Alle Effekte nutzen nur transform/opacity (keine Filter oder Blend-Modi), damit das Scrollen flüssig bleibt.
+
+## Performance & Leistungsmodus
+
+- **Grundregeln:** Animiert werden nur `transform` und `opacity`. Keine Weichzeichner, Blend-Modi, Clip-Masken oder
+  Farbfilter auf großen Flächen. Nichts läuft dauerhaft pro Frame: Effekte rechnen nur bei Scroll oder Mausbewegung.
+- **Außerhalb des Bildes** werden alle CSS-Animationen angehalten (Klasse `offscreen`), Tier-Animationen gar nicht gerendert.
+- **Trailer** höchstens in 720p, Glühwürmchen-Canvas in einfacher Pixeldichte, Bilder werden vor dem Einblenden dekodiert.
+- **Leistungsmodus** (`<html class="lite">`): kein Video, kein Smooth Scroll, kein eigener Cursor, keine Tiere,
+  keine Dauer-Animationen. Wird automatisch gewählt
+  - auf Geräten mit Touch, höchstens 4 Kernen, höchstens 4 GB Speicher oder Datensparmodus,
+  - oder wenn die Messung nach dem Intro zu viele langsame Frames sieht (dann erscheint ein Hinweis mit „Alle Effekte“).
+- Umschalten jederzeit über den Button **„✨ Effekte“** im Footer. Die Wahl wird im Browser gespeichert
+  (`localStorage` `ishtmi-fx`). Zum Testen: `?fx=lite` oder `?fx=full` an die Adresse hängen.
 
 ## Live-Status & Player
 

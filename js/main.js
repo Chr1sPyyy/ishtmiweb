@@ -6,6 +6,7 @@
   const $ = (s, r = document) => r.querySelector(s);
   const $$ = (s, r = document) => [...r.querySelectorAll(s)];
   const reduceMotion = matchMedia("(prefers-reduced-motion: reduce)").matches;
+  const isLite = () => document.documentElement.classList.contains("lite");
 
   /* ---------- Hero: Titel in Buchstaben zerlegen ---------- */
   (() => {
@@ -58,13 +59,19 @@
     if (slides.length) {
       showSlide(0);
       if (slides.length > 1 && !reduceMotion) {
-        timer = setInterval(() => { idx = (idx + 1) % slides.length; showSlide(idx); }, HERO.slideSeconds * 1000);
+        /* Nächste Folie erst einblenden, wenn sie dekodiert ist; unter laufendem Video pausiert */
+        timer = setInterval(() => {
+          if (document.getElementById("hero-media").classList.contains("video-on")) return;
+          const n = (idx + 1) % slides.length, img = slides[n];
+          (img.decode ? img.decode() : Promise.resolve()).catch(() => {}).then(() => { idx = n; showSlide(idx); });
+        }, HERO.slideSeconds * 1000);
       }
     }
 
     /* Video nur, wenn sinnvoll: nicht bei reduzierter Bewegung oder Datensparmodus */
     const conn = navigator.connection || {};
     if (!HERO.video || reduceMotion || conn.saveData) return;
+    const media = $("#hero-media");
 
     /* Vorspann überspringen und vor dem Abspann wieder einsteigen */
     const vStart = HERO.videoStart || 0, vTrim = HERO.videoTrimEnd || 0;
@@ -75,20 +82,28 @@
       else if (video.currentTime < vStart - .5) video.currentTime = vStart;
     });
 
-    /* Sichtbar erst, wenn wirklich Bilder ankommen; bei Pufferpausen zurück zur Diashow */
-    const hide = () => video.classList.remove("ready");
-    const check = () => {
-      if (video.readyState >= 3 && !video.paused && video.currentTime > vStart + .4) {
-        video.classList.add("ready");
-        muteBtn.hidden = false;
+    /* Sichtbar erst, wenn wirklich Bilder ankommen; bei Pufferpausen zurück zur Diashow.
+       Geprüft wird nur, bis das Video steht – kein Dauer-Callback pro Videoframe. */
+    let shown = false;
+    const check = () => video.readyState >= 3 && !video.paused && video.currentTime > vStart + .4;
+    const watch = () => {
+      if ("requestVideoFrameCallback" in video) {
+        const onFrame = () => { if (check()) setShown(true); else if (!shown) video.requestVideoFrameCallback(onFrame); };
+        video.requestVideoFrameCallback(onFrame);
+      } else {
+        const onTime = () => { if (check()) { video.removeEventListener("timeupdate", onTime); setShown(true); } };
+        video.addEventListener("timeupdate", onTime);
       }
     };
-    if ("requestVideoFrameCallback" in video) {
-      const onFrame = () => { check(); video.requestVideoFrameCallback(onFrame); };
-      video.requestVideoFrameCallback(onFrame);
-    } else {
-      video.addEventListener("timeupdate", check);
-    }
+    const setShown = (v) => {
+      if (shown === v) return;
+      shown = v;
+      video.classList.toggle("ready", v);
+      media.classList.toggle("video-on", v);
+      if (v) muteBtn.hidden = false; else watch();
+    };
+    const hide = () => setShown(false);
+    watch();
     video.addEventListener("waiting", hide);
     video.addEventListener("stalled", hide);
     video.addEventListener("error", hide);
@@ -100,14 +115,31 @@
         const hls = new Hls({ capLevelToPlayerSize: true, startLevel: -1, maxBufferLength: 20 });
         hls.loadSource(HERO.video);
         hls.attachMedia(video);
-        hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { hls.destroy(); video.classList.remove("ready"); } });
+        hls.on(Hls.Events.ERROR, (_, d) => { if (d.fatal) { hls.destroy(); hide(); } });
+        /* Höchstens 720p: im abgedunkelten Hintergrund reicht das und spart viel Decoder-Last */
+        hls.on(Hls.Events.MANIFEST_PARSED, () => {
+          let cap = -1;
+          hls.levels.forEach((l, i) => { if (l.height && l.height <= 720 && (cap < 0 || l.height > hls.levels[cap].height)) cap = i; });
+          if (cap >= 0) hls.autoLevelCapping = cap;
+        });
       } else return;
       video.muted = true;
       video.play().catch(() => {});
     };
-    /* hls.js lädt mit defer – ggf. kurz warten */
-    if (window.Hls || video.canPlayType("application/vnd.apple.mpegurl")) start();
-    else window.addEventListener("load", start, { once: true });
+    /* Nur im vollen Effektmodus; hls.js lädt mit defer – ggf. kurz warten */
+    let started = false;
+    const startVideo = () => {
+      if (started || isLite()) return;
+      started = true;
+      if (window.Hls || video.canPlayType("application/vnd.apple.mpegurl")) start();
+      else window.addEventListener("load", start, { once: true });
+    };
+    startVideo();
+    addEventListener("fx:mode", (e) => {
+      if (e.detail.lite) { video.pause(); hide(); }
+      else if (!started) startVideo();
+      else video.play().catch(() => {});
+    });
 
     muteBtn.addEventListener("click", () => {
       video.muted = !video.muted;
@@ -118,7 +150,7 @@
     /* Video pausieren, wenn der Hero aus dem Bild ist */
     new IntersectionObserver(([e]) => {
       if (!video.src && !video.srcObject && !video.classList.contains("ready")) return;
-      if (e.isIntersecting) video.play().catch(() => {}); else video.pause();
+      if (e.isIntersecting && !isLite()) video.play().catch(() => {}); else video.pause();
     }, { threshold: .05 }).observe($(".hero"));
   })();
 
@@ -142,7 +174,7 @@
       depth: .3 + Math.random() * .7,
     });
     const resize = () => {
-      dpr = Math.min(devicePixelRatio || 1, 2);
+      dpr = 1; /* weiche Leuchtpunkte brauchen keine Retina-Auflösung */
       w = hero.clientWidth; h = hero.clientHeight;
       canvas.width = w * dpr; canvas.height = h * dpr;
       canvas.style.width = w + "px"; canvas.style.height = h + "px";
@@ -177,15 +209,16 @@
         ctx.drawImage(sprite, px - s / 2, py - s / 2, s, s);
       }
       ctx.globalAlpha = 1;
-      if (visible) raf = requestAnimationFrame(tick);
+      if (visible && !isLite()) raf = requestAnimationFrame(tick);
     };
 
+    addEventListener("fx:mode", () => { cancelAnimationFrame(raf); if (visible && !isLite()) raf = requestAnimationFrame(tick); });
     addEventListener("resize", resize, { passive: true });
     addEventListener("mousemove", (e) => { mx = e.clientX / innerWidth - .5; my = e.clientY / innerHeight - .5; }, { passive: true });
     new IntersectionObserver(([e]) => {
       visible = e.isIntersecting;
       cancelAnimationFrame(raf);
-      if (visible) raf = requestAnimationFrame(tick);
+      if (visible && !isLite()) raf = requestAnimationFrame(tick);
     }).observe(hero);
     resize();
   })();
@@ -195,25 +228,32 @@
     if (reduceMotion) return;
     const media = $("#hero-media"), content = $(".hero-content");
     const hasMouse = matchMedia("(hover:hover) and (pointer:fine)").matches;
-    let tx = 0, ty = 0, cx = 0, cy = 0, sy = scrollY;
-    if (hasMouse) addEventListener("mousemove", (e) => {
-      tx = (e.clientX / innerWidth - .5);
-      ty = (e.clientY / innerHeight - .5);
-    }, { passive: true });
-    addEventListener("scroll", () => { sy = scrollY; }, { passive: true });
+    /* Läuft nur, solange gescrollt wird oder die Maus-Glättung noch nachzieht */
+    let tx = 0, ty = 0, cx = 0, cy = 0, running = false, lastY = -1;
     const loop = () => {
-      cx += (tx - cx) * .05; cy += (ty - cy) * .05;
-      if (sy < innerHeight * 1.1) {
+      cx += (tx - cx) * .08; cy += (ty - cy) * .08;
+      const sy = scrollY;
+      const settling = Math.abs(tx - cx) > .0008 || Math.abs(ty - cy) > .0008;
+      if (sy < innerHeight * 1.1 && (settling || sy !== lastY)) {
+        lastY = sy;
         const moving = sy > 0 || Math.abs(cx) > .001 || Math.abs(cy) > .001;
-        media.style.transform = moving ? `translate3d(${-cx * 22}px, ${sy * .35 - cy * 14}px, 0) scale(1.02)` : "";
+        media.style.transform = moving ? `translate3d(${(-cx * 22).toFixed(1)}px, ${(sy * .3 - cy * 14).toFixed(1)}px, 0) scale(1.02)` : "";
         /* Inhalt nur bei echter Bewegung transformieren – ein dauerhafter 3D-Layer
            führte auf Mobilgeräten zu einem nicht gezeichneten Hero-Text. */
-        content.style.transform = moving ? `translate(${-cx * 8}px, ${sy * .22}px)` : "";
-        content.style.opacity = sy > 0 ? Math.max(0, 1 - sy / (innerHeight * .7)) : "";
+        content.style.transform = moving ? `translate(${(-cx * 8).toFixed(1)}px, ${(sy * .22).toFixed(1)}px)` : "";
+        content.style.opacity = sy > 0 ? Math.max(0, 1 - sy / (innerHeight * .7)).toFixed(3) : "";
       }
-      requestAnimationFrame(loop);
+      if (settling) requestAnimationFrame(loop); else running = false;
     };
-    loop();
+    const kick = () => { if (!running) { running = true; requestAnimationFrame(loop); } };
+    if (hasMouse) addEventListener("mousemove", (e) => {
+      if (scrollY > innerHeight || isLite()) return;
+      tx = (e.clientX / innerWidth - .5);
+      ty = (e.clientY / innerHeight - .5);
+      kick();
+    }, { passive: true });
+    addEventListener("scroll", kick, { passive: true });
+    kick();
   })();
 
   /* ---------- Scroll-Szenen: Aufbau + Fortschritt ---------- */
@@ -230,9 +270,9 @@
       sec.id = `scene-${sc.id}`;
       sec.setAttribute("aria-label", sc.title);
       let extra = "";
-      if (sc.effect === "dive") extra = `<div class="rays"></div><div class="bubbles"></div>`;
+      if (sc.effect === "dive") extra = `<div class="iris"></div><div class="rays"></div><div class="bubbles"></div>`;
       if (sc.effect === "dusk") extra = `<div class="night"></div><div class="stars"></div><div class="moon"></div>`;
-      if (sc.effect === "wipe") extra = `<img class="scene-img scene-img2" src="${escA(sc.image2)}" alt="" loading="lazy" decoding="async"><div class="wipe-line"></div><span class="wipe-label l">${escA(sc.label)}</span><span class="wipe-label r">${escA(sc.label2)}</span>`;
+      if (sc.effect === "wipe") extra = `<div class="wipe-mask"><div class="wipe-inner"><img class="scene-img scene-img2" src="${escA(sc.image2)}" alt="" loading="lazy" decoding="async"></div></div><div class="wipe-track"><div class="wipe-line"></div></div><span class="wipe-label l">${escA(sc.label)}</span><span class="wipe-label r">${escA(sc.label2)}</span>`;
       const cta = sc.link ? `<a class="btn ${sc.external ? "btn-twitch" : "btn-ghost"}" href="${escA(sc.link)}" ${sc.external ? 'target="_blank" rel="noopener"' : ""}>${escA(sc.linkText || "Mehr")}</a>` : "";
       sec.innerHTML = `
         <div class="scene-sticky">
@@ -251,10 +291,10 @@
           <div class="scene-progress"><i></i></div>
         </div>`;
       slot.replaceWith(sec);
-      if (sc.effect === "dusk") makeStars($(".stars", sec), 90);
+      if (sc.effect === "dusk") makeStars($(".stars", sec), 30);
       if (sc.effect === "dive") {
         const b = $(".bubbles", sec);
-        for (let i = 0; i < 16; i++) {
+        for (let i = 0; i < 10; i++) {
           const el = document.createElement("i");
           el.style.setProperty("--x", Math.random() * 100 + "%");
           el.style.setProperty("--s", (4 + Math.random() * 14).toFixed(0) + "px");
@@ -267,25 +307,39 @@
     }
     if (reduceMotion) return;
 
+    /* Positionen werden gecacht (nur bei Größenänderung neu gemessen), damit pro
+       Scroll-Frame keine Layout-Abfrage nötig ist. */
     const clamp = (v) => v < 0 ? 0 : v > 1 ? 1 : v;
+    let tops = [], heights = [];
+    const measure = () => {
+      const y = scrollY;
+      tops = scenes.map(s => s.getBoundingClientRect().top + y);
+      heights = scenes.map(s => s.offsetHeight);
+    };
     let ticking = false;
     const update = () => {
       ticking = false;
-      const vh = innerHeight;
-      for (const sec of scenes) {
-        const r = sec.getBoundingClientRect();
-        const total = r.height - vh;
-        if (r.bottom < -vh || r.top > vh * 2) continue;           /* weit weg: nichts tun */
-        const p = clamp(total > 0 ? -r.top / total : 0);
+      const vh = innerHeight, y = scrollY;
+      scenes.forEach((sec, i) => {
+        const top = tops[i] - y, h = heights[i], total = h - vh;
+        if (top + h < -vh || top > vh * 2) {                       /* weit weg: nichts tun */
+          if (sec._active) { sec._active = false; sec.classList.remove("active"); }
+          return;
+        }
+        const p = clamp(total > 0 ? -top / total : 0);
+        if (sec._p !== undefined && Math.abs(sec._p - p) < .0004) return;
+        sec._p = p;
         sec.style.setProperty("--p", p.toFixed(4));
         sec.style.setProperty("--t", clamp((p - .12) / .4).toFixed(4));
         sec.style.setProperty("--e", clamp((p - .86) / .14).toFixed(4));
-        sec.classList.toggle("active", p > 0 && p < 1);
-      }
+        const act = p > 0 && p < 1;
+        if (act !== sec._active) { sec._active = act; sec.classList.toggle("active", act); }
+      });
     };
     const onScroll = () => { if (!ticking) { ticking = true; requestAnimationFrame(update); } };
     addEventListener("scroll", onScroll, { passive: true });
-    addEventListener("resize", onScroll, { passive: true });
+    new ResizeObserver(() => { measure(); onScroll(); }).observe(document.body);
+    measure();
     update();
   })();
 
@@ -312,14 +366,14 @@
   }, { threshold: .12, rootMargin: "0px 0px -40px 0px" });
   const observeReveal = (root = document) => $$(".reveal", root).forEach(el => { pendingReveal.add(el); revealIO.observe(el); });
   /* Fallback: bei Sprüngen (Anker, schnelles Scrollen) übersprungene Elemente nachträglich einblenden */
-  let revealTick = false;
+  /* Erst nach dem Scrollen prüfen statt in jedem Frame Dutzende Rechtecke zu messen */
+  let revealTimer = 0;
   addEventListener("scroll", () => {
-    if (revealTick || !pendingReveal.size) return;
-    revealTick = true;
-    requestAnimationFrame(() => {
-      revealTick = false;
+    if (!pendingReveal.size) return;
+    clearTimeout(revealTimer);
+    revealTimer = setTimeout(() => {
       for (const el of pendingReveal) if (el.getBoundingClientRect().top < innerHeight) show(el);
-    });
+    }, 150);
   }, { passive: true });
 
   /* ---------- Hilfsfunktionen ---------- */
@@ -423,7 +477,12 @@
       const diff = Math.max(0, n.date - Date.now());
       const days = Math.floor(diff / 864e5), hrs = Math.floor(diff % 864e5 / 36e5);
       const mins = Math.floor(diff % 36e5 / 6e4), secs = Math.floor(diff % 6e4 / 1e3);
-      const set = (el, v) => { if (el.textContent !== String(v)) { el.textContent = v; el.classList.remove("tick"); void el.offsetWidth; el.classList.add("tick"); } };
+      /* Ziffer wechseln + kurz einploppen (Web Animations, ohne erzwungenes Layout) */
+      const set = (el, v) => {
+        if (el.textContent === String(v)) return;
+        el.textContent = v;
+        if (!reduceMotion && el.animate) el.animate([{ transform: "translateY(-40%)", opacity: 0 }, { transform: "none", opacity: 1 }], { duration: 320, easing: "cubic-bezier(.2,.8,.2,1)" });
+      };
       set(d, days); set(h, pad(hrs)); set(m, pad(mins)); set(s, pad(secs));
       d.parentElement.style.display = days ? "" : "none";
       lbl.textContent = `Nächster Stream in (${approx}${n.slot.start} Uhr)`;
