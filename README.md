@@ -86,5 +86,13 @@ Dann `http://localhost:8080` im Browser öffnen.
 
 ## Veröffentlichen
 
-Ordner komplett hochladen, z. B. auf GitHub Pages, Netlify, Cloudflare Pages oder jeden normalen Webspace.
-HTTPS ist nötig, damit der Twitch-Player eingebettet werden darf.
+**Live:** https://chr1spyyy.github.io/ishtmiweb/ (GitHub Pages, Repository `Chr1sPyyy/ishtmiweb`, Branch `main`, Ordner `/`).
+
+Jeder Push auf `main` ist nach ein bis zwei Minuten online:
+
+```bash
+git add -A && git commit -m "Update" && git push
+```
+
+Eigene Domain: in den Repository-Einstellungen unter Pages eintragen und beim Domain-Anbieter einen CNAME auf
+`chr1spyyy.github.io` setzen. HTTPS ist nötig, damit der Twitch-Player eingebettet werden darf.
